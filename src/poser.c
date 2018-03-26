@@ -1,4 +1,10 @@
-#include "math.h"
+#include <math.h>
+
+// in standard C99 M_PI is not declared
+#ifndef M_PI
+#define M_PI		3.14159265358979323846	/* pi */
+#endif
+
 #include <linmath.h>
 #include <stdint.h>
 #include <stdio.h>

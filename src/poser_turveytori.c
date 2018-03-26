@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #else
 #include <malloc.h> //for alloca
+#include <alloca.h>
 #endif
 
 

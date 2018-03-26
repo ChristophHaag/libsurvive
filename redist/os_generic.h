@@ -172,7 +172,6 @@ OSG_INLINE void OGUnlockSema(og_sema_t os) { ReleaseSemaphore((HANDLE)os, 1, 0);
 OSG_INLINE void OGDeleteSema(og_sema_t os) { CloseHandle(os); }
 
 #else
-
 #define _GNU_SOURCE
 
 #include <pthread.h>
@@ -237,7 +236,7 @@ OSG_INLINE og_mutex_t OGCreateMutex() {
 	og_mutex_t r = malloc(sizeof(pthread_mutex_t));
 
 	pthread_mutexattr_init(&mta);
-	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
 
 	pthread_mutex_init((pthread_mutex_t *)r, &mta);
 

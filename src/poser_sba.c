@@ -15,6 +15,7 @@
 #include "survive_cal.h"
 #include "survive_config.h"
 #include "survive_reproject.h"
+#include <alloca.h>
 
 typedef struct {
 	survive_calibration_config calibration_config;

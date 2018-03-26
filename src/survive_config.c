@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #else
 #include <malloc.h> //for alloca
+#include <alloca.h>
 #endif
 #include "math.h"
 #include <errno.h>

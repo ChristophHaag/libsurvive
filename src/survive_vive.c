@@ -20,6 +20,7 @@
 #include <os_generic.h>
 #if !defined(__FreeBSD__) && !defined(__APPLE__)
 #include <malloc.h> // for alloca
+#include <alloca.h>
 #endif
 
 #include "json_helpers.h"

@@ -1,7 +1,8 @@
 //Totally hacky "client" for absorbing data from a network source of the vive data.
 
-#include <unistd.h>
+#define _GNU_SOURCE //for getline()
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <survive.h>

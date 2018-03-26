@@ -1,12 +1,14 @@
 // All MIT/x11 Licensed Code in this file may be relicensed freely under the GPL
 // or LGPL licenses.
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <survive.h>
 
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include "survive_config.h"
 #include "survive_default_devices.h"

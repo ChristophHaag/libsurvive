@@ -2490,6 +2490,9 @@ void survive_data_cb_locked(SurviveUSBInterface *si) {
 	SurviveObject *obj = si->assoc_obj;
 	uint8_t *readdata = si->buffer;
 
+	if (!obj)
+		return;
+
 	if (obj->conf == 0) {
 		if (si->usbInfo) {
 			si->usbInfo->tryConfigLoad = 1;

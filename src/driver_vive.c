@@ -657,6 +657,12 @@ int survive_vive_add_usb_device(SurviveViveData *sv, survive_usb_device_t d) {
 			}
 
 			usbInfo->tryConfigLoad = 1;
+
+			if (strcmp(usbInfo->device_info->name, "HMD IMU & LH") == 0) {
+				printf("Load HMD IMU & LH\n");
+				int hasError = LoadConfig(sv, usbInfo, 0);
+			}
+
 			/*
 			if (usbInfo->device_info->type != USB_DEV_HMD) {
 				int hasError = LoadConfig(sv, usbInfo, 0);

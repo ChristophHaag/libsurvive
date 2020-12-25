@@ -42,45 +42,20 @@ int main(int argc, char **argv) {
 		printf("Found '%s'\n", survive_simple_object_name(it));
 	}
 
+	FLT last_timecode_hmd = 0;
 	while (survive_simple_wait_for_update(actx) && keepRunning) {
 		for (const SurviveSimpleObject *it = survive_simple_get_next_updated(actx); it != 0;
 			 it = survive_simple_get_next_updated(actx)) {
 			SurvivePose pose;
+
 			FLT timecode = survive_simple_object_get_latest_pose(it, &pose) - start_time;
-			printf("%s %s (%7.3f): %f %f %f %f %f %f %f\n", survive_simple_object_name(it),
-				   survive_simple_serial_number(it), timecode, pose.Pos[0], pose.Pos[1], pose.Pos[2], pose.Rot[0],
-				   pose.Rot[1], pose.Rot[2], pose.Rot[3]);
-		}
-
-		struct SurviveSimpleEvent event = {0};
-
-		while (survive_simple_next_event(actx, &event) != SurviveSimpleEventType_None) {
-			switch (event.event_type) {
-			case SurviveSimpleEventType_ButtonEvent: {
-				const struct SurviveSimpleButtonEvent *button_event = survive_simple_get_button_event(&event);
-				SurviveObjectSubtype subtype = survive_simple_object_get_subtype(button_event->object);
-				printf("%s input %s (%d) ", survive_simple_object_name(button_event->object),
-					   SurviveInputEventStr(button_event->event_type), button_event->event_type);
-
-				FLT v1 = survive_simple_object_get_input_axis(button_event->object, SURVIVE_AXIS_TRACKPAD_X) / 2. + .5;
-
-				if (button_event->button_id != 255) {
-					printf(" button %16s (%2d) ", SurviveButtonsStr(subtype, button_event->button_id),
-						   button_event->button_id);
-
-					if (button_event->button_id == SURVIVE_BUTTON_SYSTEM) {
-						FLT v = 1 - survive_simple_object_get_input_axis(button_event->object, SURVIVE_AXIS_TRIGGER);
-						survive_simple_object_haptic(button_event->object, 30, v, .5);
-					}
+			enum SurviveSimpleObject_type type = survive_simple_object_get_type(it);
+			if (type == SurviveSimpleObject_HMD) {
+				FLT timecode_hmd = survive_simple_object_get_latest_pose(it, &pose) - start_time;
+				if (timecode_hmd != last_timecode_hmd) {
+					printf("tc %f -> %f, diff %fms %f %f %f\n", last_timecode_hmd, timecode_hmd, (timecode_hmd - last_timecode_hmd) * 1000., pose.Pos[0], pose.Pos[1], pose.Pos[2]);
 				}
-				for (int i = 0; i < button_event->axis_count; i++) {
-					printf(" %20s (%2d) %+5.4f   ", SurviveAxisStr(subtype, button_event->axis_ids[i]),
-						   button_event->axis_ids[i], button_event->axis_val[i]);
-				}
-				printf("\n");
-			}
-			case SurviveSimpleEventType_None:
-				break;
+				last_timecode_hmd = timecode_hmd;
 			}
 		}
 	}

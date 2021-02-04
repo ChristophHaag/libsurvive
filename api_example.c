@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#define SURVIVE_ENABLE_FULL_API 1
 #include <survive_api.h>
+#include "survive.h"
 #include <os_generic.h>
 
 static volatile int keepRunning = 1;
@@ -10,6 +12,7 @@ static volatile int keepRunning = 1;
 #include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <time.h>
 
 void intHandler(int dummy) {
 	if (keepRunning == 0)
@@ -36,53 +39,42 @@ int main(int argc, char **argv) {
 
 	double start_time = OGGetAbsoluteTime();
 	survive_simple_start_thread(actx);
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
 	for (const SurviveSimpleObject *it = survive_simple_get_first_object(actx); it != 0;
 		 it = survive_simple_get_next_object(actx, it)) {
 		printf("Found '%s'\n", survive_simple_object_name(it));
 	}
 
-	while (survive_simple_wait_for_update(actx) && keepRunning) {
+	float last = 0;
+	while (keepRunning) {
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		double delta_us = (end.tv_sec - start.tv_sec) * 1000000. + (end.tv_nsec - start.tv_nsec) / 1000.;
+		if (delta_us / 1000. - last > 10) {
+			printf("%f ms\n", delta_us / 1000.);
+			last = delta_us / 1000.;
+		}
+
 		for (const SurviveSimpleObject *it = survive_simple_get_next_updated(actx); it != 0;
 			 it = survive_simple_get_next_updated(actx)) {
 			SurvivePose pose;
 			FLT timecode = survive_simple_object_get_latest_pose(it, &pose) - start_time;
-			printf("%s %s (%7.3f): %f %f %f %f %f %f %f\n", survive_simple_object_name(it),
-				   survive_simple_serial_number(it), timecode, pose.Pos[0], pose.Pos[1], pose.Pos[2], pose.Rot[0],
-				   pose.Rot[1], pose.Rot[2], pose.Rot[3]);
-		}
 
-		struct SurviveSimpleEvent event = {0};
-
-		while (survive_simple_next_event(actx, &event) != SurviveSimpleEventType_None) {
-			switch (event.event_type) {
-			case SurviveSimpleEventType_ButtonEvent: {
-				const struct SurviveSimpleButtonEvent *button_event = survive_simple_get_button_event(&event);
-				SurviveObjectSubtype subtype = survive_simple_object_get_subtype(button_event->object);
-				printf("%s input %s (%d) ", survive_simple_object_name(button_event->object),
-					   SurviveInputEventStr(button_event->event_type), button_event->event_type);
-
-				FLT v1 = survive_simple_object_get_input_axis(button_event->object, SURVIVE_AXIS_TRACKPAD_X) / 2. + .5;
-
-				if (button_event->button_id != 255) {
-					printf(" button %16s (%2d) ", SurviveButtonsStr(subtype, button_event->button_id),
-						   button_event->button_id);
-
-					if (button_event->button_id == SURVIVE_BUTTON_SYSTEM) {
-						FLT v = 1 - survive_simple_object_get_input_axis(button_event->object, SURVIVE_AXIS_TRIGGER);
-						survive_simple_object_haptic(button_event->object, 30, v, .5);
-					}
-				}
-				for (int i = 0; i < button_event->axis_count; i++) {
-					printf(" %20s (%2d) %+5.4f   ", SurviveAxisStr(subtype, button_event->axis_ids[i]),
-						   button_event->axis_ids[i], button_event->axis_val[i]);
-				}
-				printf("\n");
+			printf("it %p\n", it);
+			SurviveObject *so = survive_simple_get_survive_object(it);
+			if (so && so->conf != 0) {
+				printf("%p Have config %p\n", it, so->conf);
 			}
-			case SurviveSimpleEventType_None:
-				break;
+
+			enum SurviveSimpleObject_type type = survive_simple_object_get_type(it);
+				if (type == SurviveSimpleObject_HMD && so && so->conf != 0) {
+					printf("%p got HMD config %p after %f ms\n", it, so->conf, delta_us / 1000.);
+					return 0;
+				}
 			}
-		}
+
+
 	}
 	printf("Cleaning up\n");
 	survive_simple_close(actx);
